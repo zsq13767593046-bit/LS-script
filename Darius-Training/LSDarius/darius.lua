@@ -56,8 +56,8 @@ towerDive:PermaShow(true, true)
 
 local harassMenu = menu:AddMenu("harass", "Harass")
 local harassQ = harassMenu:AddCheckBox("harass_q", "Use Q in Harass", true)
-local harassW = harassMenu:AddCheckBox("harass_w", "Use W in Harass", false)
-local harassE = harassMenu:AddCheckBox("harass_e", "Use E in Harass", false)
+local harassW = harassMenu:AddCheckBox("harass_w", "Use W to Reset Auto Attack", true)
+local harassWDelay = harassMenu:AddSlider("harass_w_delay", "W Reset Delay (ms)", 50, 0, 200)
 local harassMana = harassMenu:AddSlider("harass_mana", "Min Mana %", 40, 0, 100)
 
 local killstealMenu = menu:AddMenu("killsteal", "Killsteal")
@@ -243,6 +243,53 @@ local function Combo()
     end
 end
 
+local pendingHarassW = nil
+
+local function QueueHarassW(target)
+    if pendingHarassW then
+        return
+    end
+    if bit.band(Orbwalker.activeMode, OrbwalkerMode.Harass) == 0 then
+        return
+    end
+    if not harassW.value or not CanCast(W) then
+        return
+    end
+    if not target or not target.isHero or not target:IsValid() or not target.isAlive then
+        return
+    end
+    pendingHarassW = {
+        target = target,
+        time = Game.GetTime() + harassWDelay.value / 1000,
+    }
+end
+
+local function TryCastPendingHarassW()
+    if not pendingHarassW then
+        return false
+    end
+    local now = Game.GetTime()
+    if now < pendingHarassW.time then
+        return false
+    end
+    local target = pendingHarassW.target
+    pendingHarassW = nil
+    if bit.band(Orbwalker.activeMode, OrbwalkerMode.Harass) == 0 then
+        return false
+    end
+    if not target or not target:IsValid() or not target.isAlive then
+        return false
+    end
+    if not harassW.value or not CanCast(W) then
+        return false
+    end
+    if not Orbwalker.IsInAutoAttackRange(player, target) then
+        return false
+    end
+    W:Cast()
+    return true
+end
+
 local function Harass()
     if not Champions.CanHarass() then
         return
@@ -251,12 +298,15 @@ local function Harass()
         return
     end
 
-    local range = Q.range
-    if harassE.value then
-        range = math.max(range, E.range)
-    end
-    local target = TargetSelector.GetTarget(range, DamageType.Physical, player.serverPosition, true)
+    local target = TargetSelector.GetTarget(Q.range, DamageType.Physical, player.serverPosition, true)
     if not target then
+        return
+    end
+
+    local orbTarget = Orbwalker.GetTarget()
+    if harassW.value and CanCast(W) and orbTarget and orbTarget.isHero and orbTarget:IsValid()
+        and orbTarget.networkId == target.networkId
+        and Orbwalker.IsInAutoAttackRange(player, orbTarget) then
         return
     end
 
@@ -266,14 +316,6 @@ local function Harass()
         if distance <= Q.range and (distance >= Q_INNER or not comboQBlade.value) then
             Q:Cast()
         end
-    end
-
-    if harassW.value and CanCast(W) and Orbwalker.IsInAutoAttackRange(player, target) then
-        W:Cast()
-    end
-
-    if harassE.value and CanCast(E) and target:IsValidTarget(E.range) and not target:IsValidTarget(Q.range) then
-        E:Cast(GetPredictedPosition(target, 0.25))
     end
 end
 
@@ -378,6 +420,10 @@ local function OnTick()
         return
     end
 
+    if TryCastPendingHarassW() then
+        return
+    end
+
     if Killsteal() then
         return
     end
@@ -403,6 +449,12 @@ end
 
 Callback.Bind(CallbackType.OnTick, function()
     OnTick()
+end)
+
+Callback.Bind(CallbackType.OnAfterAttack, function(args)
+    if args and args.target then
+        QueueHarassW(args.target)
+    end
 end)
 
 Callback.Bind(CallbackType.OnImguiDraw, function()

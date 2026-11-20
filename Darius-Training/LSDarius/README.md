@@ -85,7 +85,10 @@ R 模式：
 
 ### Harass
 
-- Q / W / E 独立开关，E 默认关闭
+- Q / W 独立开关，默认开启；不提供 E，骚扰模式不用 E 起手
+- 起手为 A：进入普攻距离后先让 Orbwalker 打出普攻，脚本不抢放 Q
+- `OnAfterAttack` 检测到普攻出手后开始计时，默认等待 50ms（`W Reset Delay` 滑条，0–200ms），再放 W 重置普攻后摇并打出强化普攻，形成 A → W 起手
+- 等待计时由 `OnTick` 检查并施放 W；W 进入冷却后 Harass 才会使用 Q
 - 最低法力百分比滑条，默认 40%
 - 复用 `Champions.CanHarass()`，自动处理骚扰开关与塔下限制
 
@@ -116,7 +119,8 @@ R 模式：
 
 ### 生命周期
 
-- `OnTick`：击杀检测 → 按 `Orbwalker.activeMode` 执行 Combo / Harass / LaneClear / JungleClear
+- `OnTick`：骚扰 W 重置计时 → 击杀检测 → 按 `Orbwalker.activeMode` 执行 Combo / Harass / LaneClear / JungleClear
+- `OnAfterAttack`：记录刚出手的普攻，在 Harass 模式下安排延时 W 重置
 - `OnImguiDraw`：绘制
 - `OnUnload`：`Champions.Clean()` 并返回 `CallbackResult.Dispose`
 - 所有模式逻辑都受 `Orbwalker.CanUseSpell()` 保护，避免打断普攻节奏
@@ -141,5 +145,5 @@ R 模式：
 ## 验证
 
 - 使用 luaparse 做了 Lua 5.1 语法检查
-- 使用 fengari + SDK 桩环境跑通：模块加载、R 击杀、W/Q 连招、R Always 模式、Harass、Farm、JungleClear、绘制回调与卸载回调
+- 使用 fengari + SDK 桩环境跑通：模块加载、R 击杀、W/Q 连招、R Always 模式、Harass（先等普攻、`OnAfterAttack` 延时 W 重置）、Farm、JungleClear、绘制回调与卸载回调
 - LegendSense 运行时依赖游戏客户端，最终效果仍建议在训练模式中校准
