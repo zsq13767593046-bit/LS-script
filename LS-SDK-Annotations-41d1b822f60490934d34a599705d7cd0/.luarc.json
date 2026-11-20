@@ -1,0 +1,29 @@
+{
+    "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+    "runtime": {
+        "version": "LuaJIT",
+        "plugin": ""
+    },
+    "workspace": {
+        "checkThirdParty": false,
+        "ignoreDir": [
+            ".vscode"
+        ]
+    },
+    "diagnostics": {
+        "disable": [
+            "duplicate-set-field",
+            "redundant-parameter",
+            "param-type-not-match"
+        ]
+    },
+    "completion": {
+        "callSnippet": "Replace",
+        "keywordSnippet": "Replace"
+    },
+    "hint": {
+        "enable": true,
+        "paramType": true,
+        "setType": true
+    }
+}
