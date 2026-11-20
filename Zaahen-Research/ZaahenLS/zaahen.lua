@@ -57,48 +57,51 @@ local Q2_BUFF = Game.fnvhash("ZaahenQ2")
 local PASSIVE_BUFF = Game.fnvhash("ZaahenPassiveBuff")
 local PASSIVE_MAX = 12
 
-local menu = UI.Menu.CreateMenu("LSZaahen", "LS Zaahen", 2)
+local menu = UI.Menu.CreateMenu("LSZaahen", "LS 亚恒", 2)
 Champions.CreateBaseMenu(menu, 0)
 
-local predictionMenu = menu:AddMenu("prediction", "Prediction")
-local wHitchance = predictionMenu:AddList("w_hitchance", "W Hitchance", { "Low", "Medium", "High", "Very High" }, 2)
+local predictionMenu = menu:AddMenu("prediction", "预判")
+local wHitchance = predictionMenu:AddList("w_hitchance", "W 命中率", { "低", "中", "高", "极高" }, 2)
 
-local comboMenu = menu:AddMenu("combo", "Combo")
-local comboQ = comboMenu:AddCheckBox("combo_q", "Use Q in Combo", true)
-local comboW = comboMenu:AddCheckBox("combo_w", "Use W in Combo", true)
-local comboE = comboMenu:AddCheckBox("combo_e", "Use E in Combo", true)
-local comboEAlways = comboMenu:AddCheckBox("combo_e_always", "E Even in Auto Attack Range", false)
-local comboEGapClose = comboMenu:AddCheckBox("combo_e_gap", "E to Gap Close", true)
-local comboR = comboMenu:AddCheckBox("combo_r", "Use R in Combo", true)
-local comboRMode = comboMenu:AddList("combo_r_mode", "R Mode", { "If Killable", "Always", "Target HP <= X%" }, 0)
-local comboRHp = comboMenu:AddSlider("combo_r_hp", "R Target HP <= %", 40, 0, 100)
-local towerDive = comboMenu:AddKeyBind("toverdive_key", "Tower Dive Key", string.byte("T"), false, true)
+local comboMenu = menu:AddMenu("combo", "连招")
+local comboQ = comboMenu:AddCheckBox("combo_q", "连招使用 Q", true)
+local comboW = comboMenu:AddCheckBox("combo_w", "连招使用 W", true)
+local comboE = comboMenu:AddCheckBox("combo_e", "连招使用 E", true)
+local comboEAlways = comboMenu:AddCheckBox("combo_e_always", "普攻距离内也使用 E", false)
+local comboEGapClose = comboMenu:AddCheckBox("combo_e_gap", "使用 E 接近", true)
+local comboR = comboMenu:AddCheckBox("combo_r", "连招使用 R", true)
+local comboRMode = comboMenu:AddList("combo_r_mode", "R 模式", { "可击杀", "总是", "目标血量 ≤ X%" }, 0)
+local comboRHp = comboMenu:AddSlider("combo_r_hp", "R 目标血量 ≤ %", 40, 0, 100)
+local towerDive = comboMenu:AddKeyBind("toverdive_key", "塔下强杀按键", string.byte("T"), false, true)
 towerDive:PermaShow(true, true)
 
-local harassMenu = menu:AddMenu("harass", "Harass")
-local harassQ = harassMenu:AddCheckBox("harass_q", "Use Q in Harass", true)
-local harassW = harassMenu:AddCheckBox("harass_w", "Use W in Harass", true)
-local harassE = harassMenu:AddCheckBox("harass_e", "Use E in Harass", false)
+local harassMenu = menu:AddMenu("harass", "骚扰")
+local harassQ = harassMenu:AddCheckBox("harass_q", "骚扰使用 Q", true)
+local harassW = harassMenu:AddCheckBox("harass_w", "骚扰使用 W", true)
+local harassE = harassMenu:AddCheckBox("harass_e", "骚扰使用 E", false)
 
-local killstealMenu = menu:AddMenu("killsteal", "Killsteal")
-local killstealQ = killstealMenu:AddCheckBox("killsteal_q", "Killsteal with Q", true)
-local killstealW = killstealMenu:AddCheckBox("killsteal_w", "Killsteal with W", true)
-local killstealE = killstealMenu:AddCheckBox("killsteal_e", "Killsteal with E", false)
-local killstealR = killstealMenu:AddCheckBox("killsteal_r", "Killsteal with R", true)
+local killstealMenu = menu:AddMenu("killsteal", "击杀")
+local killstealQ = killstealMenu:AddCheckBox("killsteal_q", "使用 Q 击杀", true)
+local killstealW = killstealMenu:AddCheckBox("killsteal_w", "使用 W 击杀", true)
+local killstealE = killstealMenu:AddCheckBox("killsteal_e", "使用 E 击杀", false)
+local killstealR = killstealMenu:AddCheckBox("killsteal_r", "使用 R 击杀", true)
 
-local farmMenu = menu:AddMenu("farm", "Farm")
-local farmQ = farmMenu:AddCheckBox("farm_q", "Farm with Q", true)
-local farmW = farmMenu:AddCheckBox("farm_w", "Farm with W", true)
-local farmWMin = farmMenu:AddSlider("farm_w_min", "W Min Minions", 3, 1, 6)
+local farmMenu = menu:AddMenu("farm", "清线")
+local farmQ = farmMenu:AddCheckBox("farm_q", "使用 Q 清线", true)
+local farmW = farmMenu:AddCheckBox("farm_w", "使用 W 清线", true)
+local farmWMin = farmMenu:AddSlider("farm_w_min", "W 最少小兵数", 3, 1, 6)
 
-Champions.CreateColorMenu(menu:AddMenu("draw", "Drawing"), false)
+local feelMenu = menu:AddMenu("feel", "手感")
+local qResetDelay = feelMenu:AddSlider("q_reset_delay", "Q 重置延时 (ms)", 30, 0, 150)
 
-local drawMenu = menu:AddMenu("drawmisc", "Draw Misc")
-local drawDamage = drawMenu:AddCheckBox("draw_damage", "Draw Combo Damage", true)
-local drawPassive = drawMenu:AddCheckBox("draw_passive", "Draw Passive Stacks", true)
-local drawQ2 = drawMenu:AddCheckBox("draw_q2", "Draw Q2 Ready", true)
-local drawR = drawMenu:AddCheckBox("draw_r", "Draw R Killable", true)
-local drawLine = drawMenu:AddCheckBox("draw_line", "Draw Line to Enemies", false)
+Champions.CreateColorMenu(menu:AddMenu("draw", "绘制"), false)
+
+local drawMenu = menu:AddMenu("drawmisc", "其他绘制")
+local drawDamage = drawMenu:AddCheckBox("draw_damage", "绘制连招伤害", true)
+local drawPassive = drawMenu:AddCheckBox("draw_passive", "绘制被动层数", true)
+local drawQ2 = drawMenu:AddCheckBox("draw_q2", "绘制 Q2 就绪", true)
+local drawR = drawMenu:AddCheckBox("draw_r", "绘制 R 可击杀", true)
+local drawLine = drawMenu:AddCheckBox("draw_line", "绘制到敌人的连线", false)
 
 local function IsQ2Ready()
     return player:FindBuff(Q2_BUFF) ~= nil
@@ -235,6 +238,60 @@ local function InAutoAttackRange(target)
     return Orbwalker.IsInAutoAttackRange(player, target, Q_RANGE_BONUS)
 end
 
+local pendingQ = nil
+
+local function QModeEnabled()
+    if comboQ.value and bit.band(Orbwalker.activeMode, OrbwalkerMode.Combo) ~= 0 then
+        return true
+    end
+    if harassQ.value and bit.band(Orbwalker.activeMode, OrbwalkerMode.Harass) ~= 0 then
+        return true
+    end
+    return false
+end
+
+local function QueueQ(target)
+    if pendingQ then
+        return
+    end
+    if not target or not target.isHero or not target:IsValid() or not target.isAlive then
+        return
+    end
+    if not InAutoAttackRange(target) or not CanCast(Q) or not QModeEnabled() then
+        return
+    end
+    pendingQ = {
+        target = target,
+        time = Game.GetTime() + qResetDelay.value / 1000,
+    }
+end
+
+local function TryCastPendingQ()
+    if not pendingQ then
+        return false
+    end
+    local now = Game.GetTime()
+    if now < pendingQ.time then
+        return false
+    end
+    local target = pendingQ.target
+    pendingQ = nil
+    if not QModeEnabled() then
+        return false
+    end
+    if not target or not target:IsValid() or not target.isAlive then
+        return false
+    end
+    if not InAutoAttackRange(target) or not CanCast(Q) then
+        return false
+    end
+    if player:IsWindingUp() then
+        return false
+    end
+    Q:Cast()
+    return true
+end
+
 local function GetECastPosition(target)
     local from = player.serverPosition
     local dx = target.serverPosition.x - from.x
@@ -341,9 +398,6 @@ local function Combo()
         end
     end
 
-    if comboQ.value and CanCast(Q) and InAutoAttackRange(target) then
-        Q:Cast()
-    end
 end
 
 local function Harass()
@@ -375,9 +429,6 @@ local function Harass()
         end
     end
 
-    if harassQ.value and CanCast(Q) and InAutoAttackRange(target) then
-        Q:Cast()
-    end
 end
 
 local function Killsteal()
@@ -408,7 +459,7 @@ local function Killsteal()
                 end
             end
 
-            if killstealQ.value and CanCast(Q) and InAutoAttackRange(enemy) and GetQDamage(enemy) >= GetRealHealth(enemy, DamageType.Physical) then
+            if killstealQ.value and CanCast(Q) and InAutoAttackRange(enemy) and not player:IsWindingUp() and GetQDamage(enemy) >= GetRealHealth(enemy, DamageType.Physical) then
                 if towerDive.value or not player.serverPosition:IsUnderEnemyTurret() then
                     if Q:Cast() then
                         Game.IssueOrder(IssueOrderType.AttackUnit, enemy)
@@ -433,7 +484,7 @@ local function Farm()
         end
     end
 
-    if farmQ.value and CanCast(Q) then
+    if farmQ.value and CanCast(Q) and not player:IsWindingUp() then
         local target = Orbwalker.GetTarget()
         if target and target:IsValid() and target.isAlive and InAutoAttackRange(target) then
             Q:Cast()
@@ -449,7 +500,7 @@ local function JungleClear()
         end
     end
 
-    if farmQ.value and CanCast(Q) then
+    if farmQ.value and CanCast(Q) and not player:IsWindingUp() then
         local target = Orbwalker.GetTarget()
         if target and target:IsValid() and target.isAlive and target.isMonster and InAutoAttackRange(target) then
             Q:Cast()
@@ -470,7 +521,7 @@ local function Draw()
     end
 
     if drawQ2.value and IsQ2Ready() then
-        Renderer.DrawWorldText("Q2 READY", player.position, Math.Vector2(-35, -105), 16, 0xFFFFAA00)
+        Renderer.DrawWorldText("Q2 就绪", player.position, Math.Vector2(-35, -105), 16, 0xFFFFAA00)
     end
 
     for _, enemy in ObjectManager.enemyHeroes:pairs() do
@@ -490,6 +541,10 @@ end
 
 local function OnTick()
     if not player or not player:IsValid() or not player.isAlive then
+        return
+    end
+
+    if TryCastPendingQ() then
         return
     end
 
@@ -519,6 +574,14 @@ end
 Callback.Bind(CallbackType.OnTick, function()
     OnTick()
 end)
+
+if CallbackType.OnAfterAttack then
+    Callback.Bind(CallbackType.OnAfterAttack, function(args)
+        if args and args.target then
+            QueueQ(args.target)
+        end
+    end)
+end
 
 Callback.Bind(CallbackType.OnImguiDraw, function()
     Draw()

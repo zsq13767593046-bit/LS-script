@@ -11,7 +11,7 @@ ZaahenLS/
 └── README.md
 ```
 
-把整个 `ZaahenLS` 文件夹复制到脚本平台的 `GS\tier3\ZaahenLS\`，由平台读取 `module.lua`。根菜单名为 **LS Zaahen**，位于第 2 页。
+把整个 `ZaahenLS` 文件夹复制到脚本平台的 `GS\tier3\ZaahenLS\`，由平台读取 `module.lua`。根菜单名为 **LS 亚恒**，位于第 2 页。
 
 `module.lua` 与 `zaahen.lua` 都做了英雄检测：`charName == "Zaahen"`，或 `Game.HashStringSDBM("Zaahen") == player.hash`。
 
@@ -24,7 +24,7 @@ ZaahenLS/
 | E 赤金突袭 | 最远 350 的位置突进，落点伤害内圈 200 / 外圈 375 | `E:Cast(落点)` |
 | R 大赦 | 600 范围位置跃进，落地半径 550 | `R:Cast(预测落点)` |
 
-Q1 / Q2 都是普攻强化，脚本只在普攻距离内施放 Q。Q2 是否就绪通过 `ZaahenQ2` buff 判断，伤害随之切换为 Q2 数值。Q 的击杀检测会额外 `Game.IssueOrder(IssueOrderType.AttackUnit, target)`，确保强化普攻确实打出。
+Q1 / Q2 都是普攻重置。脚本不会在普攻前抢放 Q，而是在 `OnAfterAttack` 捕获普攻后按“Q 重置延时”排队施放，并在施放前检查 `player:IsWindingUp()`，避免打断下一发普攻。Q2 是否就绪通过 `ZaahenQ2` buff 判断，伤害随之切换为 Q2 数值。Q 的击杀检测会额外 `Game.IssueOrder(IssueOrderType.AttackUnit, target)`，确保强化普攻确实打出。
 
 ## 伤害模型
 
@@ -63,32 +63,47 @@ Q1 / Q2 都是普攻强化，脚本只在普攻距离内施放 Q。Q2 是否就�
 
 ## 连招逻辑
 
+普攻距离内以 **A → Q** 起手：
+
+```
+Orbwalker 普攻
+  → OnAfterAttack 捕获普攻
+  → 按“Q 重置延时”排队 Q
+  → 检查 IsWindingUp 后施放 Q
+  → 下一发强化普攻
+```
+
+远程先用 W/E 接近，进入普攻距离后再 A → Q：
+
 ```
 R（满足条件且目标在 600 内）
   → W（目标在 850 内且不在普攻距离）
-  → E（目标不在普攻距离，或开启“E Even in Auto Attack Range”）
-  → Q（目标在普攻距离）
+  → E（目标不在普攻距离，或开启“普攻距离内也使用 E”）
+  → 等待普攻出手后 Q
 ```
 
+- Q 不会在普攻前施放；只有普攻已经出手且目标在普攻距离内才会排队
+- Q 施放前检查 `player:IsWindingUp()`，正在前摇时跳过本次 Q，避免断平 A
+- 高攻速下如果下一发普攻已开始前摇，脚本会放弃这次 Q，等下一次普攻后再重置
 - R 按模式判断：可击杀 / 总是 / 目标血量阈值；目标在敌方塔下时默认不 R
 - W 是远程两段伤害并拉近目标，用于先手补距离
 - E 优先落在目标外圈，触发 1.5 倍物理伤害和最大生命百分比魔法伤害
 - 目标超出 E 伤害范围但仍在 W 射程内时，可按设置用 E 作为位移接近
-- 目标在普攻距离时默认不 E，除非开启“E Even in Auto Attack Range”
-- 塔下默认不连招；按住 Tower Dive Key（默认 T）可强制 E/R
+- 目标在普攻距离时默认不 E，除非开启“普攻距离内也使用 E”
+- 塔下默认不连招；按住“塔下强杀按键”（默认 T）可强制 E/R
 - 每个技能施放前检查等级、冷却和法力（`CanCast`）
 
 R 模式：
 
 | 模式 | 行为 |
 | --- | --- |
-| If Killable | R 伤害 ≥ 物理有效生命时施放 |
-| Always | 目标在 R 范围内且可用时施放 |
-| Target HP <= X% | 目标生命百分比低于滑条值时施放 |
+| 可击杀 | R 伤害 ≥ 物理有效生命时施放 |
+| 总是 | 目标在 R 范围内且可用时施放 |
+| 目标血量 ≤ X% | 目标生命百分比低于滑条值时施放 |
 
 ## 功能特性
 
-### Combo
+### 连招
 
 - Q / W / E / R 独立开关
 - E 是否在普攻距离内也使用
@@ -96,31 +111,36 @@ R 模式：
 - R 三种模式与血量阈值
 - 塔下强杀按键
 
-### Harass
+### 骚扰
 
 - W 默认开启，目标不在普攻距离时从 850 距离消耗并拉近
-- Q 默认开启，进入普攻距离后强化普攻
+- Q 默认开启，进入普攻距离后等普攻出手再 A → Q
 - E 默认关闭，避免骚扰时突进过深
 
-### Killsteal
+### 击杀
 
 - R：目标在 600 内且 R 伤害足够
 - W：预测命中且两段伤害足够
 - E：按外圈/内圈伤害判断，默认关闭
-- Q：强化普攻 + 普攻伤害足够时施放，并补攻击指令
+- Q：强化普攻 + 普攻伤害足够时施放，要求当前不在普攻前摇，并补攻击指令
 - 任一技能成功施放后本 tick 不再继续
 
-### Farm / JungleClear
+### 清线 / 打野
 
 - W 使用 `GetCastOnBestFarmPosition` 找角度清线，默认至少 3 个目标
 - Q 在 Orbwalker 目标为小兵或野怪且进入普攻距离时强化普攻
 - 清线遵循 `Champions.CanSpellFarm()`
 
+### 手感
+
+- `Q 重置延时 (ms)`：默认 30。`OnAfterAttack` 后等待该时间再尝试 Q；设为 0 表示下一次 OnTick 立即尝试
+- Q 施放前始终检查普攻前摇，宁可少放一次 Q 也不打断平 A
+
 ### 绘制
 
 - `Champions.CreateColorMenu` 提供官方 Q/W/E/R 范围
 - 被动果决层数（`P x/12`）
-- `Q2 READY` 提示
+- `Q2 就绪` 提示
 - 连招伤害条（`Renderer.DamageIndicatorRendering`）
 - R 可击杀标记
 - 到敌方英雄的连线
@@ -139,6 +159,7 @@ R 模式：
 ## 已知限制
 
 - Q1/Q2 的可用状态依赖 `ZaahenQ2` buff 和 `SDKSpell:Ready()`；不同客户端的 buff 名可能需要调整
+- Q 重置依赖 `OnAfterAttack`；如果平台没有该回调，Q 不会自动接在普攻后
 - Q1 治疗、被动满层复活、R 命中英雄回复未自动使用
 - R 的被动护甲穿透与施放期间减伤未计入伤害/生存模型
 - E 落点几何假设平坦地形；墙体或位移阻挡可能让实际落点与计算结果不同
@@ -148,5 +169,5 @@ R 模式：
 ## 验证
 
 - 使用 luaparse 做 Lua 5.1 语法检查
-- 使用 fengari + SDK 桩环境跑通：模块加载、Harass W/Q、Combo R/W/E 外圈/Q、Killsteal W/E/Q/R、Farm、JungleClear、绘制与卸载
+- 使用 fengari + SDK 桩环境跑通：模块加载、骚扰 W、A→Q、Q 不打断普攻前摇、连招 R/W/E 外圈、击杀 W/E/Q/R、清线、打野、绘制与卸载
 - LegendSense 运行时依赖游戏客户端，最终效果建议在训练模式中校准
