@@ -57,7 +57,7 @@ local Q2_BUFF = Game.fnvhash("ZaahenQ2")
 local PASSIVE_BUFF = Game.fnvhash("ZaahenPassiveBuff")
 local PASSIVE_MAX = 12
 
-local menu = Menu:CreateMenu("LSZaahen", "LS Zaahen", 2)
+local menu = UI.Menu.CreateMenu("LSZaahen", "LS Zaahen", 2)
 Champions.CreateBaseMenu(menu, 0)
 
 local predictionMenu = menu:AddMenu("prediction", "Prediction")

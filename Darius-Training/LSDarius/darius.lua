@@ -40,7 +40,7 @@ local Q_INNER = 180
 local HEMO_HASH = Game.fnvhash("DariusHemo")
 local HEMO_MARKER_HASH = Game.fnvhash("DariusHemoMarker")
 
-local menu = Menu:CreateMenu("LSDarius", "LS Darius", 2)
+local menu = UI.Menu.CreateMenu("LSDarius", "LS Darius", 2)
 Champions.CreateBaseMenu(menu, 0)
 
 local comboMenu = menu:AddMenu("combo", "Combo")
@@ -451,11 +451,13 @@ Callback.Bind(CallbackType.OnTick, function()
     OnTick()
 end)
 
-Callback.Bind(CallbackType.OnAfterAttack, function(args)
-    if args and args.target then
-        QueueHarassW(args.target)
-    end
-end)
+if CallbackType.OnAfterAttack then
+    Callback.Bind(CallbackType.OnAfterAttack, function(args)
+        if args and args.target then
+            QueueHarassW(args.target)
+        end
+    end)
+end
 
 Callback.Bind(CallbackType.OnImguiDraw, function()
     Draw()
